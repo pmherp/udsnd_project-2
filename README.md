@@ -11,4 +11,4 @@ There is a jupyter notebook including all the code of my analysis. Moreover I in
 The main findings of the code can be found at the post available here. __(not a valid link, since there are no results yet)__
 
 ## Licensing, Authors, Acknowledgements
-TB
+TBD
