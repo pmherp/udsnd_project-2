@@ -1,24 +1,132 @@
+# import libraries
+#for wrangling
+import pandas as pd 
+import numpy as np
+from sqlalchemy import create_engine
+#for regular expressions
+import re
+#for natural language processing
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
+nltk.download(['punkt', 'wordnet'])
+#for modelling
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+from sklearn.pipeline import Pipeline, FeatureUnion
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.multioutput import MultiOutputClassifier
+from sklearn.linear_model import SGDClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import confusion_matrix
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.metrics import classification_report
+#for pickeling
+import pickle
+
 import sys
 
 
 def load_data(database_filepath):
-    pass
+    """
+    Load data from SQL database, split it into X, Y
+    Args:
+        - database_filepath: complete path to database
+    Returns:
+        - X: features for modeling
+        - Y: true outputs for modeling
+        - cat: labels of loaded data
+    """
+    # load data from database
+    engine = create_engine(str('sqlite:///')+str(database_filepath))
+    df = pd.read_sql_table('cleaned_messages', engine)
+    
+    #as specified in part 3
+    X = df['message'].values
+    Y = df.iloc[:,4:].values
+    cat = df.iloc[:, 4:].columns.tolist()
 
+    return X, Y, cat
 
 def tokenize(text):
-    pass
+    """
+    Normalizes text: Removes punctuation, tokenizes text, cleans tokens, makes al lowercase and removes spaces, lematizes tokens
+    Args:
+        - text: for countVectorizer from sklearn (Convert a collection of text documents to a matrix of token counts)
+    Returns:
+        - clean_tokens
+    """
+    # remove punctuation characters
+    text = re.sub(r"[^A-Za-z0-9\-]", " ", text)
+    
+    #creates tokens
+    tokens = word_tokenize(text)
+    
+    #convert token to meaningful base form
+    lemmatizer = WordNetLemmatizer()
+
+    clean_tokens = []
+    for tok in tokens:
+        #actually lemmatize, make all lowercase, remove space and append
+        clean_tok = lemmatizer.lemmatize(tok).lower().strip()
+        clean_tokens.append(clean_tok)
+
+    return clean_tokens
 
 
 def build_model():
-    pass
+    """
+    Creates pipeline of model and parameters to optimize it
+    Args:
+        - None
+    Returns:
+        - cv: grid search object
+    """
+    #build pipeline
+    pipeline = Pipeline([
+        ('vect', CountVectorizer(tokenizer=tokenize)),
+        ('tfidf', TfidfTransformer()),
+        ('clf', MultiOutputClassifier(KNeighborsClassifier(n_neighbors=3, leaf_size=30, n_jobs=-1)))    
+    ])
+
+    #gridsearch parameters
+    parameters = {
+        'clf__estimator__n_neighbors': [5],
+        'clf__estimator__leaf_size': [30]
+    }
+
+    cv = GridSearchCV(pipeline, param_grid=parameters)
+
+    return cv
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
-    pass
+    """
+    Runs prediction on model and outputs accuracy, macro avg and weighted avg
+    Args:
+        - model
+        - X_test: x values of test data
+        - Y_Test: y values of test data
+        - category_names: categories (cat) of loaded data
+    Returns:
+        - None
+    """
+    y_pred=model.predict(X_test)
+    #print f1 score, precision
+    for i in range(len(category_names)):
+        print(classification_report(Y_test[:, i], y_pred[:, i]))
 
 
 def save_model(model, model_filepath):
-    pass
+    """
+    Pickles model
+    Args:
+        - model
+        - model_filepath: complete path to saved model
+    Returns:
+        - None
+    """
+    with open(model_filepath, 'wb') as f:
+        pickle.dump(model, f)
 
 
 def main():
