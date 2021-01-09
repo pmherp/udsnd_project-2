@@ -9,7 +9,9 @@ import re
 import nltk
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
-nltk.download(['punkt', 'wordnet'])
+from nltk.corpus import stopwords
+from nltk import pos_tag
+nltk.download(['punkt', 'wordnet', 'stopwords', 'averaged_perceptron_tagger'])
 #for modelling
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.pipeline import Pipeline, FeatureUnion
@@ -22,6 +24,8 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.metrics import classification_report
 #for pickeling
 import pickle
+#parallel backend
+from sklearn.utils import parallel_backend
 
 import sys
 
@@ -60,6 +64,12 @@ def tokenize(text):
     
     #creates tokens
     tokens = word_tokenize(text)
+
+    #remove stopwords
+    tokens = [t for t in tokens if t not in stopwords.words("english")]
+
+    # tag each word with part of speech
+    pos_tag(tokens)
     
     #convert token to meaningful base form
     lemmatizer = WordNetLemmatizer()
@@ -85,16 +95,16 @@ def build_model():
     pipeline = Pipeline([
         ('vect', CountVectorizer(tokenizer=tokenize)),
         ('tfidf', TfidfTransformer()),
-        ('clf', MultiOutputClassifier(KNeighborsClassifier(n_neighbors=3, leaf_size=30, n_jobs=-1)))    
+        ('clf', MultiOutputClassifier(KNeighborsClassifier(n_neighbors=3, leaf_size=30)))    
     ])
 
-    #gridsearch parameters
+    #define gridsearch parameters
     parameters = {
         'clf__estimator__n_neighbors': [5],
-        'clf__estimator__leaf_size': [30]
+        'clf__estimator__leaf_size': [20]
     }
 
-    cv = GridSearchCV(pipeline, param_grid=parameters)
+    cv = GridSearchCV(pipeline, param_grid=parameters, n_jobs=-1, verbose=2)
 
     return cv
 
@@ -110,6 +120,9 @@ def evaluate_model(model, X_test, Y_test, category_names):
     Returns:
         - None
     """
+    #print best accuracy of grid combinations
+    print(model.best_score_)
+
     y_pred=model.predict(X_test)
     #print f1 score, precision
     for i in range(len(category_names)):
@@ -136,19 +149,20 @@ def main():
         X, Y, category_names = load_data(database_filepath)
         X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
         
-        print('Building model...')
-        model = build_model()
+        with parallel_backend('multiprocessing'):
+            print('Building model...')
+            model = build_model()
         
-        print('Training model...')
-        model.fit(X_train, Y_train)
+            print('Training model...')
+            model.fit(X_train, Y_train)
         
-        print('Evaluating model...')
-        evaluate_model(model, X_test, Y_test, category_names)
+            print('Evaluating model...')
+            evaluate_model(model, X_test, Y_test, category_names)
 
-        print('Saving model...\n    MODEL: {}'.format(model_filepath))
-        save_model(model, model_filepath)
+            print('Saving model...\n    MODEL: {}'.format(model_filepath))
+            save_model(model, model_filepath)
 
-        print('Trained model saved!')
+            print('Trained model saved!')
 
     else:
         print('Please provide the filepath of the disaster messages database '\
