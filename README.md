@@ -28,7 +28,7 @@ For this project, I was using data from Figure Eight containing labelled disaste
 
 ## Running the Code
 Clone this repository and run the following commands to set up the database and the classifier:
-- database: `python data/process_data.py data/disaster_messages.csv data/disaster_categories.csv` data/DisasterResponse.db
+- database: `python data/process_data.py data/disaster_messages.csv data/disaster_categories.csv data/DisasterResponse.db`
 - model: `python models/train_classifier.py data/DisasterResponse.db models/classifier.pkl`
 
 To run the web app on your local machine, run the following command:
