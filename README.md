@@ -35,9 +35,6 @@ To run the web app on your local machine, run the following command:
 web app: `python run.py`
 Then go to your browser and enter http://localhost:3001/ to see the web app
 
-## Results
-The main findings of the code can be found at the post available here. __not a working link yet!__
-
 ## Licensing, Authors, Acknowledgements
 Udacity provided the file templates and code snippets that were used in the web app. 
 Figure Eight provided the dataset that was used to train the classifier.
