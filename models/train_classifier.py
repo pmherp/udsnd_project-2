@@ -1,6 +1,6 @@
 # import libraries
 #for wrangling
-import pandas as pd 
+import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine
 #for regular expressions
@@ -43,7 +43,7 @@ def load_data(database_filepath):
     # load data from database
     engine = create_engine(str('sqlite:///')+str(database_filepath))
     df = pd.read_sql_table('cleaned_messages', engine)
-    
+
     #as specified in part 3
     X = df['message'].values
     Y = df.iloc[:,4:].values
@@ -61,7 +61,7 @@ def tokenize(text):
     """
     # remove punctuation characters
     text = re.sub(r"[^A-Za-z0-9\-]", " ", text)
-    
+
     #creates tokens
     tokens = word_tokenize(text)
 
@@ -70,7 +70,7 @@ def tokenize(text):
 
     # tag each word with part of speech
     pos_tag(tokens)
-    
+
     #convert token to meaningful base form
     lemmatizer = WordNetLemmatizer()
 
@@ -95,13 +95,13 @@ def build_model():
     pipeline = Pipeline([
         ('vect', CountVectorizer(tokenizer=tokenize)),
         ('tfidf', TfidfTransformer()),
-        ('clf', MultiOutputClassifier(KNeighborsClassifier(n_neighbors=3, leaf_size=30)))    
+        ('clf', MultiOutputClassifier(KNeighborsClassifier(n_neighbors=3, leaf_size=30)))
     ])
 
     #define gridsearch parameters
     parameters = {
-        'clf__estimator__n_neighbors': [5],
-        'clf__estimator__leaf_size': [20]
+        'clf__estimator__n_neighbors': [4, 5],
+        'clf__estimator__leaf_size': [20, 30]
     }
 
     cv = GridSearchCV(pipeline, param_grid=parameters, n_jobs=-1, verbose=2)
@@ -148,14 +148,14 @@ def main():
         print('Loading data...\n    DATABASE: {}'.format(database_filepath))
         X, Y, category_names = load_data(database_filepath)
         X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
-        
+
         with parallel_backend('multiprocessing'):
             print('Building model...')
             model = build_model()
-        
+
             print('Training model...')
             model.fit(X_train, Y_train)
-        
+
             print('Evaluating model...')
             evaluate_model(model, X_test, Y_test, category_names)
 
