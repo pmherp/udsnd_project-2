@@ -48,14 +48,16 @@ def clean_data(df):
         categories[column] = categories[column].astype(str).str[-1:]
         #convert column from string to numeric
         categories[column] = pd.to_numeric(categories[column])
-        #delete all rows with values 2
-        categories.drop(categories[categories[column] == 2].index, inplace=True)
     
     #drop the original categories column from `df`
     df = df.drop('categories', axis=1)
 
     # concatenate the original dataframe with the new `categories` dataframe
     df = pd.concat([df, categories], axis=1)
+
+    #leave only 0 and 1 in output columns
+    for column in df.columns:
+        df.drop(df[df[column]==2].index, axis=0, inplace=True)
    
     #check number of duplicates
     if df.duplicated().sum() > 0:
