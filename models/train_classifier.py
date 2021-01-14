@@ -120,13 +120,14 @@ def evaluate_model(model, X_test, Y_test, category_names):
     Returns:
         - None
     """
-    #print best accuracy of grid combinations
-    print(model.best_score_)
+    Y_pred = model.predict(X_test)
 
-    y_pred=model.predict(X_test)
+    #print best accuracy of grid combinations
+    overall_accuracy = (Y_pred == Y_test).mean().mean()
+    print('Average overall accuracy {0:.2f}% \n'.format(overall_accuracy*100))
+    
     #print f1 score, precision
-    for i in range(len(category_names)):
-        print(classification_report(Y_test[:, i], y_pred[:, i]))
+    print(classification_report(Y_test, Y_pred, target_names=category_names, zero_division=0))
 
 
 def save_model(model, model_filepath):
