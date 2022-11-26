@@ -1,6 +1,6 @@
 # Disaster Response Pipeline
 
-## Starting November 28th, 2022, free dynos will no longer be available. This project was on a free plan.
+Starting November 28th, 2022, free dynos will no longer be available. This project was on a free plan.
 
 ## Project Motivation
 It is usually during crisis or disaster, that first respondants have the least capacity to go through all the text messages they receive. This application allows for them to easily cluster incoming messages into 36 categories and react appropriatly to them.
